@@ -71,15 +71,16 @@ std::string BigInt::divmod(const std::string& a, const std::string& b, std::stri
     int cmp = compare(a, b);
     if (cmp < 0) { rem = a; return "0"; }
     if (cmp == 0) { rem = "0"; return "1"; }
+    std::string mult[10];
+    for (int d = 0; d <= 9; d++) mult[d] = mul(b, std::string(1, '0' + d));
     std::string q, r = "";
     for (size_t i = 0; i < a.size(); i++) {
         r += a[i];
         r = trimZeros(r);
         int d = 0;
         for (int digit = 9; digit >= 0; digit--) {
-            std::string prod = mul(b, std::string(1, '0' + digit));
-            if (compare(r, prod) >= 0) {
-                r = sub(r, prod);
+            if (compare(r, mult[digit]) >= 0) {
+                r = sub(r, mult[digit]);
                 d = digit;
                 break;
             }
