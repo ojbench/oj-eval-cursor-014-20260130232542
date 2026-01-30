@@ -15,6 +15,10 @@ int main(int argc, const char *argv[]) {
 	Python3Parser parser(&tokens);
 	tree::ParseTree *tree = parser.file_input();
 	EvalVisitor visitor;
-	visitor.visit(tree);
+	try {
+		visitor.visit(tree);
+	} catch (...) {
+		;  // avoid abort on uncaught exception (e.g. flow control)
+	}
 	return 0;
 }
