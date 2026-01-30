@@ -522,10 +522,11 @@ std::any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx) {
 std::any EvalVisitor::visitComparison(Python3Parser::ComparisonContext *ctx) {
     auto arith = ctx->arith_expr();
     if (arith.size() == 1) return visit(arith[0]);
+    std::vector<Value> vals;
+    for (auto* a : arith) vals.push_back(std::any_cast<Value>(visit(a)));
     bool result = true;
     for (size_t i = 0; i < ctx->comp_op().size(); i++) {
-        Value left = std::any_cast<Value>(visit(arith[i]));
-        Value right = std::any_cast<Value>(visit(arith[i + 1]));
+        Value left = vals[i], right = vals[i + 1];
         auto* op = ctx->comp_op(i);
         bool cmp = false;
         if (op->LESS_THAN()) cmp = compareValues(left, right) < 0;
@@ -534,12 +535,16 @@ std::any EvalVisitor::visitComparison(Python3Parser::ComparisonContext *ctx) {
         else if (op->GT_EQ()) cmp = compareValues(left, right) >= 0;
         else if (op->EQUALS()) {
             Value conv = tryConvertForCompare(left, right);
-            if (std::holds_alternative<PyNone>(conv)) cmp = (compareValues(left, right) == 0);
-            else cmp = std::get<bool>(conv);
+            if (std::holds_alternative<PyNone>(conv)) {
+                int c = compareValues(left, right);
+                cmp = (c == 0);
+            } else cmp = std::get<bool>(conv);
         } else if (op->NOT_EQ_2()) {
             Value conv = tryConvertForCompare(left, right);
-            if (std::holds_alternative<PyNone>(conv)) cmp = (compareValues(left, right) != 0);
-            else cmp = !std::get<bool>(conv);
+            if (std::holds_alternative<PyNone>(conv)) {
+                int c = compareValues(left, right);
+                cmp = (c != 0);
+            } else cmp = !std::get<bool>(conv);
         }
         result = result && cmp;
         if (!result) return Value(false);
